@@ -1,5 +1,5 @@
 // @ts-check
-const { exec } = require("child_process");
+const { exec, spawnSync } = require("child_process");
 const color = require("cli-color");
 
 /** @typedef {unknown} JsonValue */
@@ -185,6 +185,8 @@ async function runPhabricatorReviews(geckoDir, userId) {
     );
   }
 
+  ensureArcAvailable();
+
   const response = /** @type {Response<Cursor<Revision>>} */ (
     await callConduit(
       "differential.revision.search",
@@ -237,3 +239,15 @@ async function runPhabricatorReviews(geckoDir, userId) {
 }
 
 module.exports = { runPhabricatorReviews };
+
+function ensureArcAvailable() {
+  const result = spawnSync("arc", ["help"], { stdio: "ignore" });
+  const spawnError = /** @type {NodeJS.ErrnoException | undefined} */ (
+    result.error || undefined
+  );
+  if (spawnError && spawnError.code === "ENOENT") {
+    throw new Error(
+      "Could not find the `arc` binary. Install Arcanist by following https://we.phorge.it/book/phorge/article/installation_guide/."
+    );
+  }
+}

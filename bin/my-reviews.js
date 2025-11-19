@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-check
 const { runPhabricatorReviews, runGithubReviews } = require('../index');
 
 async function main() {
@@ -26,7 +27,11 @@ async function main() {
         process.exit(1);
     }
   } catch (error) {
-    console.error(error.message);
+    if (error instanceof Error) {
+      console.error(error.message);
+    } else {
+      console.error(error);
+    }
     process.exit(1);
   }
 }

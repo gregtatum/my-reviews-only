@@ -7,7 +7,8 @@
     "my-reviews": "./bin/my-reviews.js"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "typecheck": "tsc"
   },
   "author": "",
   "license": "MIT",
@@ -34,6 +35,9 @@
     "url": "^0.11.0"
   },
   "devDependencies": {
-    "flow-bin": "^0.107.0"
+    "@types/cli-color": "^2.0.6",
+    "@types/node": "^24.10.1",
+    "flow-bin": "^0.107.0",
+    "typescript": "^5.9.3"
   }
 }

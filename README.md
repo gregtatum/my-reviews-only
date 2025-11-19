@@ -39,7 +39,7 @@ my-reviews github firefox-devtools profiler gregtatum
 
 Next this is using flow types, I need this to use JavaScript with TypeScript annotations.
 
-- [ ] Create a tsconfig to add type checking and install TypeScript.
-- [ ] Migrate flow types to JSDoc TypeScript - https://www.typescriptlang.org/docs/handbook/jsdoc-supported-types.html
+- [x] Create a tsconfig to add type checking and install TypeScript. (Added `tsconfig.json`, installed TypeScript, and wired `npm run typecheck`.)
+- [x] Migrate flow types to JSDoc TypeScript - https://www.typescriptlang.org/docs/handbook/jsdoc-supported-types.html (Converted the GitHub and Phabricator scripts to `@ts-check`-friendly JSDoc.)
 
 Finally let's cleanup the README. Remove all of the plan above and write a user guide on how to use the project.

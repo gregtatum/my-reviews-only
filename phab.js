@@ -1,10 +1,54 @@
-// @flow
+// @ts-check
 const { exec } = require("child_process");
 const color = require("cli-color");
 
-function run(cmd, options = {}) /* Promise<string> */ {
+/** @typedef {unknown} JsonValue */
+
+/**
+ * @template T
+ * @typedef {(
+ *   | { error: null; errorMessage: null; response: T }
+ *   | { error: string; errorMessage: string; response: null }
+ * )} Response
+ */
+
+/**
+ * @template T
+ * @typedef {Object} Cursor
+ * @property {T[]} data
+ */
+
+/**
+ * @typedef {Object} RevisionFields
+ * @property {string} title
+ * @property {string} authorPHID
+ * @property {{ value: string; name: string; closed: boolean }} status
+ */
+
+/**
+ * @typedef {Object} Revision
+ * @property {number} id
+ * @property {RevisionFields} fields
+ */
+
+/**
+ * @template T
+ * @typedef {(endpoint: string, data: JsonValue, options?: import("child_process").ExecOptions) => Promise<Response<T>>} CallConduit
+ */
+
+/**
+ * @param {string} cmd
+ * @param {import("child_process").ExecOptions} [options]
+ * @returns {Promise<string>}
+ */
+function run(cmd, options = {}) {
   return new Promise((resolve, reject) => {
-    exec(cmd, options, (error, stdout, stderr) => {
+    /**
+     * @param {Error | null} error
+     * @param {Buffer | string} stdout
+     * @param {Buffer | string} stderr
+     */
+    const handleExec = (error, stdout, stderr) => {
       if (error) {
         console.log(`Error running: ${cmd}`);
         console.log(stderr);
@@ -15,11 +59,17 @@ function run(cmd, options = {}) /* Promise<string> */ {
       } else {
         reject(new Error("stdout was not a string"));
       }
-    });
+    };
+
+    exec(cmd, options, handleExec);
   });
 }
 
-function stringify(data /* :mixed */) /*: string */ {
+/**
+ * @param {JsonValue} data
+ * @returns {string}
+ */
+function stringify(data) {
   const string = JSON.stringify(data);
   if (!string) {
     throw new Error("JSON stringify returned nothing.");
@@ -28,62 +78,13 @@ function stringify(data /* :mixed */) /*: string */ {
   return string.replace(`'`, `'"'"'`);
 }
 
-/*::
-type Response<T> = {|
-    +error: null,
-    +errorMessage: null,
-    +response: T,
-  |}
-  | {|
-    +error: string,
-    +errorMessage: string,
-    +response: null,
-  |};
-
-type Cursor<T> = {
-  data: T[],
-  maps: [],
-  query: string, // e.g. { queryKey: 'active' },
-  cursor: { limit: number, after: null | mixed, before: null | mixed, order: null | mixed }
-}
-
-type Revision = {|
-  id: number,
-  type: string, // 'DREV',
-  phid: string, //'PHID-DREV-walgqlk76cgxybqaz4xz',
-  fields: {|
-    title: string, // 'Bug 1576555 - doAtLeastOnePeriodicSample() relies on samples being recorded - r?gregtatum',
-    authorPHID: 'PHID-USER-6gilzlesrxygczj5xep5',
-    status: {
-      value: string, // 'needs-review',
-      name: string, // 'Needs Review',
-      closed: boolean, // false,
-      'color.ansi': string // 'magenta'
-    },
-    repositoryPHID: string, //'PHID-REPO-saax4qdxlbbhahhp2kg5',
-    diffPHID: string, // 'PHID-DIFF-qbez3zynh5dko2xtwdzt',
-    summary: string, // 'Some tests only care about markers...',
-    testPlan: string, //'',
-    isDraft: boolean,
-    holdAsDraft: boolean,
-    dateCreated: number, // 1567753331,
-    dateModified: number, // 1567753702,
-    policy: {|
-      view: string, // 'public',
-      edit: string, // 'PHID-PROJ-njo5uuqyyq3oijbkhy55'
-    |},
-    'bugzilla.bug-id': string // '1576555'
-  |},
-  attachments: []
-|}
-
-type CallConduit = <T>(string, mixed) => Promise<Response<T>>
-*/
-var callConduit /* :CallConduit */ = async function (
-  endpoint,
-  data,
-  options = {}
-) {
+/**
+ * @param {string} endpoint
+ * @param {JsonValue} data
+ * @param {import("child_process").ExecOptions} [options]
+ * @returns {Promise<Response<any>>}
+ */
+const callConduit = async function (endpoint, data, options = {}) {
   const results = await run(
     `echo '${stringify(data)}' | arc call-conduit -- ${endpoint}`,
     options
@@ -91,7 +92,21 @@ var callConduit /* :CallConduit */ = async function (
   return JSON.parse(results);
 };
 
-function printRevision(revision /* :Revision */) {
+/**
+ * @param {Revision} revision
+ * @returns {string | undefined}
+ */
+function getBugId(revision) {
+  const bugId = /** @type {Record<string, unknown>} */ (revision.fields)[
+    "bugzilla.bug-id"
+  ];
+  return typeof bugId === "string" ? bugId : undefined;
+}
+
+/**
+ * @param {Revision} revision
+ */
+function printRevision(revision) {
   const maxStatusLength = 11;
   const statusName = revision.fields.status.name.replace(
     "Needs Review",
@@ -109,8 +124,11 @@ function printRevision(revision /* :Revision */) {
   console.log(`${indent} ${url}`);
 }
 
-function printBug(revision /* :Revision */) {
-  const bugId = revision.fields["bugzilla.bug-id"];
+/**
+ * @param {Revision} revision
+ */
+function printBug(revision) {
+  const bugId = getBugId(revision);
   if (!bugId) {
     const bugLabel = color.yellow(`No Bug`);
     console.log(`\n${bugLabel}\n`);
@@ -123,10 +141,13 @@ function printBug(revision /* :Revision */) {
   console.log(`\n${bugLabel} - ${url}\n`);
 }
 
-function printRevisionList(revisions /* :Revision[] */) {
+/**
+ * @param {Revision[]} revisions
+ */
+function printRevisionList(revisions) {
   let prevBug = null;
   for (const revision of revisions) {
-    const thisBug = revision.fields["bugzilla.bug-id"] || "no bug";
+    const thisBug = getBugId(revision) || "no bug";
     if (prevBug !== thisBug) {
       printBug(revision);
     }
@@ -135,7 +156,10 @@ function printRevisionList(revisions /* :Revision[] */) {
   }
 }
 
-function printHeader(text /* :string */) {
+/**
+ * @param {string} text
+ */
+function printHeader(text) {
   console.log(
     color.cyan(
       `\n======= Phabricator ${text} =====================================================`
@@ -143,6 +167,11 @@ function printHeader(text /* :string */) {
   );
 }
 
+/**
+ * @param {string} geckoDir
+ * @param {string} userId
+ * @returns {Promise<{ mine: Revision[]; others: Revision[] }>}
+ */
 async function runPhabricatorReviews(geckoDir, userId) {
   if (!geckoDir) {
     throw new Error(
@@ -156,12 +185,14 @@ async function runPhabricatorReviews(geckoDir, userId) {
     );
   }
 
-  const response /* :Response<Cursor<Revision>> */ = await callConduit(
-    "differential.revision.search",
-    {
-      queryKey: "active",
-    },
-    { cwd: geckoDir }
+  const response = /** @type {Response<Cursor<Revision>>} */ (
+    await callConduit(
+      "differential.revision.search",
+      {
+        queryKey: "active",
+      },
+      { cwd: geckoDir }
+    )
   );
 
   if (response.error || response.response === null) {
@@ -169,10 +200,11 @@ async function runPhabricatorReviews(geckoDir, userId) {
   }
   const { data } = response.response;
 
-  data.sort(
-    (a, b) =>
-      Number(a.fields["bugzilla.bug-id"]) - Number(b.fields["bugzilla.bug-id"])
-  );
+  data.sort((a, b) => {
+    const bugA = Number(getBugId(a) || 0);
+    const bugB = Number(getBugId(b) || 0);
+    return bugA - bugB;
+  });
 
   const mine = data.filter((revision) => {
     const { title, authorPHID } = revision.fields;

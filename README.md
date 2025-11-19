@@ -74,4 +74,22 @@ node ./bin/my-reviews.js phabricator "$HOME/dev/firefox" PHID-USER-hch2p624jejt4
 - `npm run typecheck` runs TypeScript against the JSDoc annotations (`phab.js`, `github.js`, and the CLI) to ensure structural typing stays sound.
 - `npm test` is currently a placeholder; feel free to add integration tests for the API wrappers.
 
-Contributions are welcome to expand the CLI (e.g. supporting multiple GitHub repos per invocation or surfacing Phabricator reviewers). EOF
+Contributions are welcome to expand the CLI (e.g. supporting multiple GitHub repos per invocation or surfacing Phabricator reviewers).
+
+## Publishing
+
+To publish a new version to npm, run the helper script from the repo root:
+
+```sh
+./publish.sh [patch|minor|major]
+```
+
+It defaults to a patch bump. The script will:
+
+- run `npm run typecheck`
+- ensure the git working tree is clean
+- bump the version via `npm version <type>` (which commits + tags)
+- `npm publish --access public`
+- `git push origin HEAD --follow-tags`
+
+Make sure you are logged in (`npm login`) before running it.

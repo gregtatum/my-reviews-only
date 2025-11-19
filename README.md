@@ -1,45 +1,69 @@
-# My Reviews Only
+# My Reviews CLI
 
-This has been part of my personal productivity tools, and I use it to check my review queue. I want to clean it up so that more of my team can use it to check their reviews from the CLI across GitHub and Phabricator.
+A small Node.js tool that prints your current review queue from GitHub and Phabricator so you can keep up with incoming requests from the terminal.
 
-Current usage:
-
-```sh
-revs() {
-  # List all current things in my review queue
-  node ~/scripts/my-reviews/phab "$HOME/dev/firefox" 'PHID-USER-hch2p624jejt4kddoqow'
-  # node ~/scripts/my-reviews/github 'unicode-org' 'icu4x' 'gregtatum'
-  node ~/scripts/my-reviews/github 'firefox-devtools' 'profiler' 'gregtatum'
-  # node ~/scripts/my-reviews/github 'firefox-devtools' 'profiler-server' 'gregtatum'
-  # node ~/scripts/my-reviews/github 'mozilla' 'treeherder' 'gregtatum'
-  node ~/scripts/my-reviews/github 'projectfluent' 'fluent.js' 'gregtatum'
-  node ~/scripts/my-reviews/github 'projectfluent' 'fluent-rs' 'gregtatum'
-  node ~/scripts/my-reviews/github 'mozilla' 'firefox-translations-training' 'gregtatum'
-  node ~/scripts/my-reviews/github 'mozilla' 'firefox-translations-models' 'gregtatum'
-}
-```
-
-This needs to be udpated to:
-
-- [x] Create a proper npm package. (Renamed the package to `my-reviews` and split the scripts into exportable modules.)
-- [x] Create a CLI that can call out to the appropriate scripts. (Added the `my-reviews` binary with `phabricator` and `github` subcommands.)
+## Installation
 
 ```sh
-my-reviews phabricator $PATH_TO_FIREFOX $PHABRICATOR_USER_ID
-my-reviews github $ORG $REPO $USERNAME
+# install dependencies
+npm install
+
+# optionally expose the CLI on your PATH
+npm link
 ```
 
-e.g.
+This project targets modern Node.js (v18+) and relies on:
+- An environment with `arc` configured to talk to your Phabricator instance.
+- GitHub credentials if you want to increase the API rate limit (set `GITHUB_TOKEN`).
+
+## Usage
+
+Once linked (or by running `node ./bin/my-reviews.js ...`), the CLI exposes two subcommands.
+
+### Phabricator reviews
+
+```sh
+my-reviews phabricator <path-to-gecko-repo> <phabricator-user-phid>
+```
+
+- The first argument must be the Gecko checkout where Arcanist is configured.
+- The second argument is your Phabricator user PHID (find it in any revision JSON dump or via the Phabricator UI).
+
+Example:
 
 ```sh
 phab_user='PHID-USER-hch2p624jejt4kddoqow'
 my-reviews phabricator "$HOME/dev/firefox" "$phab_user"
+```
+
+### GitHub reviews
+
+```sh
+my-reviews github <org> <repo> <github-username>
+```
+
+The command fetches open pull requests for the given repository, printing:
+- PRs where you are a requested reviewer and the review is still outstanding.
+- Your own open PRs (excluding drafts and WIPs) so you can monitor their status.
+
+Example:
+
+```sh
 my-reviews github firefox-devtools profiler gregtatum
 ```
 
-Next this is using flow types, I need this to use JavaScript with TypeScript annotations.
+### Running without linking
 
-- [x] Create a tsconfig to add type checking and install TypeScript. (Added `tsconfig.json`, installed TypeScript, and wired `npm run typecheck`.)
-- [x] Migrate flow types to JSDoc TypeScript - https://www.typescriptlang.org/docs/handbook/jsdoc-supported-types.html (Converted the GitHub and Phabricator scripts to `@ts-check`-friendly JSDoc.)
+If you prefer not to `npm link`, invoke the binary directly:
 
-Finally let's cleanup the README. Remove all of the plan above and write a user guide on how to use the project.
+```sh
+node ./bin/my-reviews.js github mozilla translations nordzilla
+node ./bin/my-reviews.js phabricator "$HOME/dev/firefox" PHID-USER-hch2p624jejt4kddoqow
+```
+
+## Development
+
+- `npm run typecheck` runs TypeScript against the JSDoc annotations (`phab.js`, `github.js`, and the CLI) to ensure structural typing stays sound.
+- `npm test` is currently a placeholder; feel free to add integration tests for the API wrappers.
+
+Contributions are welcome to expand the CLI (e.g. supporting multiple GitHub repos per invocation or surfacing Phabricator reviewers). EOF

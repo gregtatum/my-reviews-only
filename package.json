@@ -1,5 +1,5 @@
 {
-  "name": "my-reviews",
+  "name": "@gregtatum/my-reviews",
   "version": "0.1.0",
   "description": "Review queue helpers for GitHub and Phabricator.",
   "main": "index.js",

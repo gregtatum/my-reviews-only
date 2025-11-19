@@ -4,12 +4,16 @@ A small Node.js tool that prints your current review queue from GitHub and Phabr
 
 ## Installation
 
-```sh
-# install dependencies
-npm install
+Install from npm to get the CLI on your PATH:
 
-# optionally expose the CLI on your PATH
-npm link
+```sh
+npm install -g @gregtatum/my-reviews
+```
+
+Or run it ad-hoc with `npx`:
+
+```sh
+npx @gregtatum/my-reviews github mozilla translations nordzilla
 ```
 
 This project targets modern Node.js (v18+) and relies on:
@@ -54,9 +58,13 @@ my-reviews github firefox-devtools profiler gregtatum
 
 ### Running without linking
 
-If you prefer not to `npm link`, invoke the binary directly:
+If you are working from a local clone (or don’t want a global install), either use `npx` or call the script directly:
 
 ```sh
+npx @gregtatum/my-reviews github mozilla translations nordzilla
+npx @gregtatum/my-reviews phabricator "$HOME/dev/firefox" PHID-USER-hch2p624jejt4kddoqow
+
+# or, from a clone
 node ./bin/my-reviews.js github mozilla translations nordzilla
 node ./bin/my-reviews.js phabricator "$HOME/dev/firefox" PHID-USER-hch2p624jejt4kddoqow
 ```

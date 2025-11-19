@@ -1,5 +1,7 @@
 // @ts-check
 const { exec, spawnSync } = require("child_process");
+const fs = require("fs");
+const path = require("path");
 const color = require("cli-color");
 
 /** @typedef {unknown} JsonValue */
@@ -85,8 +87,10 @@ function stringify(data) {
  * @returns {Promise<Response<any>>}
  */
 const callConduit = async function (endpoint, data, options = {}) {
+  const arcBinary = resolveArcBinary();
+  const quotedArc = JSON.stringify(arcBinary);
   const results = await run(
-    `echo '${stringify(data)}' | arc call-conduit -- ${endpoint}`,
+    `echo '${stringify(data)}' | ${quotedArc} call-conduit -- ${endpoint}`,
     options
   );
   return JSON.parse(results);
@@ -238,10 +242,41 @@ async function runPhabricatorReviews(geckoDir, userId) {
   return { mine, others };
 }
 
-module.exports = { runPhabricatorReviews };
+/**
+ * @param {string} geckoDir
+ * @returns {Promise<{ phid: string; userName: string }>}
+ */
+async function getPhabricatorUser(geckoDir) {
+  if (!geckoDir) {
+    throw new Error(
+      "The first argument must be the path to the gecko directory where arcanist is configured."
+    );
+  }
+
+  ensureArcAvailable();
+
+  const response = /** @type {Response<{ phid: string; userName: string }>} */ (
+    await callConduit(
+      "user.whoami",
+      {},
+      {
+        cwd: geckoDir,
+      }
+    )
+  );
+
+  if (response.error || response.response === null) {
+    throw new Error(response.errorMessage);
+  }
+
+  return response.response;
+}
+
+module.exports = { runPhabricatorReviews, getPhabricatorUser };
 
 function ensureArcAvailable() {
-  const result = spawnSync("arc", ["help"], { stdio: "ignore" });
+  const arcBinary = resolveArcBinary();
+  const result = spawnSync(arcBinary, ["help"], { stdio: "ignore" });
   const spawnError = /** @type {NodeJS.ErrnoException | undefined} */ (
     result.error || undefined
   );
@@ -250,4 +285,20 @@ function ensureArcAvailable() {
       "Could not find the `arc` binary. Install Arcanist by following https://we.phorge.it/book/phorge/article/installation_guide/."
     );
   }
+}
+
+/**
+ * @returns {string}
+ */
+function resolveArcBinary() {
+  if (process.env.MY_REVIEWS_ARC_PATH) {
+    return process.env.MY_REVIEWS_ARC_PATH;
+  }
+
+  const localArc = path.join(__dirname, "arcanist", "bin", "arc");
+  if (fs.existsSync(localArc)) {
+    return localArc;
+  }
+
+  return "arc";
 }

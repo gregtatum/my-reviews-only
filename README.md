@@ -2,6 +2,42 @@
 
 A small Node.js tool that prints your current review queue from GitHub and Phabricator so you can keep up with incoming requests from the terminal.
 
+## Example Usage
+
+```sh
+# List all current things in my review queue.
+revs() {
+  my-reviews phabricator "$HOME/dev/firefox" PHID-USER-XXXXXXXXXX
+  my-reviews github mozilla translations gregtatum
+}
+```
+
+Then run:
+
+```sh
+➤ revs
+
+======= Phabricator Mine =====================================================
+
+Bug 1998228 - https://bugzilla.mozilla.org/show_bug.cgi?id=1998228
+
+     Review - Bug 1998228 - Type check StaticEmbeddingsPipeline.mjs
+              https://phabricator.services.mozilla.com/D271264
+     Review - Bug 1998228 - Type check MLEngineParent.sys.mjs
+              https://phabricator.services.mozilla.com/D271263
+     Review - Bug 1998228 - Type check MLEngineChild.sys.mjs
+              https://phabricator.services.mozilla.com/D271262
+Needs Revision - Bug 1998228 - Add toolkit/components/ml/tsconfig.json for some initial type checking
+              https://phabricator.services.mozilla.com/D271261
+
+======= Phabricator Others =====================================================
+
+Bug 2000885 - https://bugzilla.mozilla.org/show_bug.cgi?id=2000885
+
+     Review - Bug 2000885 - create an ai window singleton registered with BrowserComponents.manifest r=mardak
+              https://phabricator.services.mozilla.com/D273122
+```
+
 ## Installation
 
 Phabricator support requires `arc` on your PATH: https://we.phorge.it/book/phorge/article/installation_guide/
@@ -25,17 +61,16 @@ The CLI exposes two subcommands, `phabricator` and `github`.
 ### Phabricator reviews
 
 ```sh
-my-reviews phabricator <path-to-gecko-repo> <phabricator-user-phid>
+my-reviews phabricator <path-to-firefox-repo> <phabricator-user-phid>
 ```
 
 - The first argument must be the Firefox checkout.
-- The second argument is your Phabricator user PHID (find it in any revision JSON dump or via the Phabricator UI).
+- The second argument is your Phabricator user PHID. Find this via `my-reviews phabricator-user <path-to-firefox-repo>`
 
 Example:
 
 ```sh
-phab_user='PHID-USER-hch2p624jejt4kddoqow'
-my-reviews phabricator "$HOME/dev/firefox" "$phab_user"
+my-reviews phabricator "$HOME/dev/firefox" "PHID-USER-XXXXXXXXXXX"
 ```
 
 ### GitHub reviews
@@ -51,7 +86,7 @@ The command fetches open pull requests for the given repository, printing:
 Example:
 
 ```sh
-my-reviews github firefox-devtools profiler gregtatum
+my-reviews github mozilla translations gregtatum
 ```
 
 ## Development

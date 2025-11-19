@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 // @ts-check
-const { runPhabricatorReviews, runGithubReviews } = require('../index');
+const {
+  runPhabricatorReviews,
+  runGithubReviews,
+  getPhabricatorUser,
+} = require('../index');
 
 async function main() {
   const [command, ...args] = process.argv.slice(2);
@@ -14,6 +18,13 @@ async function main() {
       case 'phabricator': {
         const [geckoDir, userId] = args;
         await runPhabricatorReviews(geckoDir, userId);
+        break;
+      }
+      case 'phabricator-user': {
+        const [geckoDir] = args;
+        const user = await getPhabricatorUser(geckoDir);
+        console.log(`Phabricator username: ${user.userName}`);
+        console.log(`Phabricator PHID: ${user.phid}`);
         break;
       }
       case 'github': {
@@ -37,7 +48,9 @@ async function main() {
 }
 
 function printUsage() {
-  console.log(`Usage:\n  my-reviews phabricator <path-to-gecko> <phabricator-user-phid>\n  my-reviews github <org> <repo> <github-username>`);
+  console.log(
+    `Usage:\n  my-reviews phabricator <path-to-gecko> <phabricator-user-phid>\n  my-reviews phabricator-user <path-to-gecko>\n  my-reviews github <org> <repo> <github-username>`
+  );
 }
 
 main();

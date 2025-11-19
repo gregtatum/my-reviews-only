@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "Review queue helpers for GitHub and Phabricator.",
   "main": "index.js",
+  "bin": {
+    "my-reviews": "./bin/my-reviews.js"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -15,6 +18,7 @@
     "cli"
   ],
   "files": [
+    "bin/my-reviews.js",
     "github.js",
     "phab.js",
     "notifications.js",

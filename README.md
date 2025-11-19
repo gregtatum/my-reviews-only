@@ -22,7 +22,7 @@ revs() {
 This needs to be udpated to:
 
 - [x] Create a proper npm package. (Renamed the package to `my-reviews` and split the scripts into exportable modules.)
-- [ ] Create a CLI that can call out to the appropriate scripts
+- [x] Create a CLI that can call out to the appropriate scripts. (Added the `my-reviews` binary with `phabricator` and `github` subcommands.)
 
 ```sh
 my-reviews phabricator $PATH_TO_FIREFOX $PHABRICATOR_USER_ID
@@ -32,9 +32,9 @@ my-reviews github $ORG $REPO $USERNAME
 e.g.
 
 ```sh
-$phab_user =
-my-reviews phabricator "$HOME/dev/firefox" 'PHID-USER-hch2p624jejt4kddoqow'
-my-reviews firefox-devtools profiler 'gregtatum
+phab_user='PHID-USER-hch2p624jejt4kddoqow'
+my-reviews phabricator "$HOME/dev/firefox" "$phab_user"
+my-reviews github firefox-devtools profiler gregtatum
 ```
 
 Next this is using flow types, I need this to use JavaScript with TypeScript annotations.

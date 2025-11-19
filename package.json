@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "description": "Review queue helpers for GitHub and Phabricator.",
   "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gregtatum/my-reviews.git"
+  },
   "bin": {
     "my-reviews": "./bin/my-reviews.js"
   },

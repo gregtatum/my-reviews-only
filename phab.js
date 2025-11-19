@@ -79,9 +79,14 @@ type Revision = {|
 
 type CallConduit = <T>(string, mixed) => Promise<Response<T>>
 */
-var callConduit /* :CallConduit */ = async function (endpoint, data) {
+var callConduit /* :CallConduit */ = async function (
+  endpoint,
+  data,
+  options = {}
+) {
   const results = await run(
-    `echo '${stringify(data)}' | arc call-conduit -- ${endpoint}`
+    `echo '${stringify(data)}' | arc call-conduit -- ${endpoint}`,
+    options
   );
   return JSON.parse(results);
 };
@@ -138,30 +143,25 @@ function printHeader(text /* :string */) {
   );
 }
 
-(async () => {
-  const [geckoDir, userId] = process.argv.slice(2);
-
+async function runPhabricatorReviews(geckoDir, userId) {
   if (!geckoDir) {
-    console.warn(
-      "This command requires the first argument to be the path the gecko directory where arcanist is configured."
+    throw new Error(
+      "The first argument must be the path to the gecko directory where arcanist is configured."
     );
-    process.exit(1);
   }
-  try {
-    process.chdir(geckoDir);
-  } catch (error) {
-    console.warn(
-      `Unable to change the directory to your gecko repo from path "${geckoDir}"`
+
+  if (!userId) {
+    throw new Error(
+      "The second argument must be the PHID of the user running the command."
     );
-    console.error(error);
-    process.exit(1);
   }
 
   const response /* :Response<Cursor<Revision>> */ = await callConduit(
     "differential.revision.search",
     {
       queryKey: "active",
-    }
+    },
+    { cwd: geckoDir }
   );
 
   if (response.error || response.response === null) {
@@ -174,37 +174,34 @@ function printHeader(text /* :string */) {
       Number(a.fields["bugzilla.bug-id"]) - Number(b.fields["bugzilla.bug-id"])
   );
 
-  printHeader("Mine");
-  printRevisionList(
-    data.filter((revision) => {
-      const { title, authorPHID } = revision.fields;
-      if (userId !== authorPHID) {
-        return false;
-      }
-      if (!title) {
-        return true;
-      }
-      // if (!revision.fields["bugzilla.bug-id"]) {
-      //   return false;
-      // }
-      return !title.match(/\bWIP\b/);
-    })
-  );
-
-  if (!userId) {
-    console.warn(data);
-    console.warn(
-      "\n\nPlease provide the phid of a user as the first argument to this script. See the data dumped above to find yours."
-    );
-  }
+  const mine = data.filter((revision) => {
+    const { title, authorPHID } = revision.fields;
+    if (userId !== authorPHID) {
+      return false;
+    }
+    if (!title) {
+      return true;
+    }
+    return !title.match(/\bWIP\b/);
+  });
 
   const others = data.filter(
     (revision) =>
       userId !== revision.fields.authorPHID &&
       revision.fields.status.value === "needs-review"
   );
+
+  if (mine.length > 0) {
+    printHeader("Mine");
+    printRevisionList(mine);
+  }
+
   if (others.length > 0) {
     printHeader("Others");
     printRevisionList(others);
   }
-})();
+
+  return { mine, others };
+}
+
+module.exports = { runPhabricatorReviews };

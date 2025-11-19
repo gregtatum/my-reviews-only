@@ -1,7 +1,7 @@
 // @flow
 const { Octokit } = require("@octokit/rest");
 const octokit = new Octokit();
-const color = require('cli-color')
+const color = require("cli-color");
 
 /*::
 
@@ -190,14 +190,11 @@ type ReviewResponse = {|
 |}
 */
 
-async function run () {
-  const [owner, repo, me] = process.argv.slice(2);
-
+async function runGithubReviews(owner, repo, me) {
   if (!owner || !repo || !me) {
-    owner, repo, me
-    console.warn('This command requires 3 arguments, The GitHub owner, repo, and user respectively.');
-    console.warn(`For instance: node github.js 'firefox-devtools' 'profiler' 'gregtatum'`);
-    process.exit(1);
+    throw new Error(
+      "GitHub reviews requires the owner, repo, and user passed as arguments."
+    );
   }
 
   const response /* :PullsResponse */ = await octokit.pulls.list({
@@ -237,6 +234,8 @@ async function run () {
       await printPR(owner, repo, pr);
     }
   }
+
+  return { prsToHandle, myPrs };
 }
 
 async function printPR(owner, repo, pr/* :PR */) {
@@ -275,9 +274,8 @@ async function printPR(owner, repo, pr/* :PR */) {
 
 
 }
-
-run().catch(error => console.error(error));
-
 function printHeader (owner/* :string */, repo/* :string */, text/* :string */) {
   console.log(color.cyan(`\n======= ${text} (${owner}/${repo}) =====================================================`));
 }
+
+module.exports = { runGithubReviews };

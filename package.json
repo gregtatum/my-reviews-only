@@ -1,22 +1,35 @@
 {
-  "name": "phab",
-  "version": "1.0.0",
-  "description": "",
-  "main": "phab.js",
+  "name": "my-reviews",
+  "version": "0.1.0",
+  "description": "Review queue helpers for GitHub and Phabricator.",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "MIT",
+  "keywords": [
+    "github",
+    "phabricator",
+    "reviews",
+    "cli"
+  ],
+  "files": [
+    "github.js",
+    "phab.js",
+    "notifications.js",
+    "open-pr.js",
+    "index.js"
+  ],
   "dependencies": {
     "@octokit/rest": "^18.0.6",
     "cli-color": "^1.4.0",
+    "inquirer": "^7.3.3",
+    "node-fetch": "^2.6.1",
+    "open": "^7.3.0",
     "url": "^0.11.0"
   },
   "devDependencies": {
-    "flow-bin": "^0.107.0",
-    "inquirer": "^7.3.3",
-    "node-fetch": "^2.6.1",
-    "open": "^7.3.0"
+    "flow-bin": "^0.107.0"
   }
 }

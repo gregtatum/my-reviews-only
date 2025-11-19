@@ -21,7 +21,7 @@ revs() {
 
 This needs to be udpated to:
 
-- [ ] Create a proper npm package.
+- [x] Create a proper npm package. (Renamed the package to `my-reviews` and split the scripts into exportable modules.)
 - [ ] Create a CLI that can call out to the appropriate scripts
 
 ```sh
